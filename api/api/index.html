@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Тест подбора аромата</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ec 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #8e9eab 0%, #eef2f3 100%);
+            padding: 30px;
+            text-align: center;
+            color: #2c3e50;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .ai-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .question {
+            font-size: 20px;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            line-height: 1.4;
+            min-height: 60px;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .option {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .option:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .option.selected {
+            background: #e3f2fd;
+            border-color: #8e9eab;
+            box-shadow: 0 5px 15px rgba(142, 158, 171, 0.2);
+        }
+        
+        .progress {
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #8e9eab 0%, #6d7b88 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #8e9eab;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        .result-section {
+            display: none;
+            text-align: center;
+        }
+        
+        .result-image {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #8e9eab, #eef2f3);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .result-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .result-description {
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 25px;
+            text-align: left;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #8e9eab;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #dc3545;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .success-message {
+            background: #d1edff;
+            color: #055160;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #0dcaf0;
+            display: none;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 12px;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 AI Тест для подбора аромата</h1>
+            <p>Искусственный интеллект подберет идеальный парфюм именно для вас</p>
+            <div class="ai-badge">🤖 Powered by AI</div>
+        </div>
+        
+        <div class="content">
+            <div class="success-message" id="successMessage">
+                ✅ Готово! Тест загружен. Отвечайте на вопросы ниже.
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+            
+            <div id="questionSection">
+                <div class="progress" id="progressText">Вопрос 1 из 8</div>
+                <div class="question" id="questionText">Загрузка первого вопроса...</div>
+                <div class="options" id="optionsContainer"></div>
+                <button id="nextBtn" onclick="nextQuestion()" disabled>Далее</button>
+            </div>
+            
+            <div class="loading" id="loadingSection">
+                <div class="spinner"></div>
+                <p id="loadingText">ИИ генерирует вопрос...</p>
+            </div>
+            
+            <div class="result-section" id="resultSection">
+                <div class="result-image">✨</div>
+                <h2 class="result-title">Ваш идеальный аромат</h2>
+                <div class="result-description" id="resultDescription"></div>
+                <button onclick="restartTest()">🔄 Пройти тест еще раз</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            Тест создан с помощью искусственного интеллекта • Ваши ответы не сохраняются
+        </div>
+    </div>
+
+    <script>
+        // 🔧 ВАЖНО: ЗАМЕНИТЕ ЭТОТ URL НА ВАШ VERCEL URL ПОСЛЕ РАЗВЕРТЫВАНИЯ
+        // Пример: https://perfume-test.vercel.app
+        const SERVER_URL = 'https://your-project.vercel.app';
+        
+        let currentQuestion = 0;
+        let answers = [];
+        const totalQuestions = 8;
+
+        // Запуск теста при загрузке
+        window.onload = async function() {
+            showLoading('Загрузка первого вопроса...');
+            await generateQuestion();
+        };
+
+        // Генерация вопроса
+        async function generateQuestion() {
+            try {
+                const response = await fetch(`${SERVER_URL}/api/generate-question`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        answers: answers
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Ошибка сервера: ${response.status} - ${errorText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    throw new Error('Неверный формат ответа от сервера');
+                }
+
+                displayQuestion(data.choices[0].message.content);
+                showSuccess('Вопрос загружен!');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Ошибка при загрузке вопроса: ' + error.message);
+            }
+        }
+
+        // Отображение вопроса
+        function displayQuestion(content) {
+            hideLoading();
+            
+            const lines = content.split('\n').filter(line => line.trim());
+            let question = 'Какой аромат отражает вашу личность?';
+            const options = [
+                'Свежий и энергичный', 
+                'Цветочный и романтичный', 
+                'Древесный и загадочный', 
+                'Пряный и чувственный'
+            ];
+
+            // Умный парсинг ответа ИИ
+            let foundOptions = 0;
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                
+                // Ищем вопрос (строка без A) B) C) D) в начале)
+                if (!trimmedLine.match(/^[A-D][).]/) && trimmedLine) {
+                    // Убираем "Вопрос:" если есть
+                    const cleanLine = trimmedLine.replace(/^Вопрос:\s*/i, '');
+                    if (cleanLine && question === 'Какой аромат отражает вашу личность?') {
+                        question = cleanLine;
+                    }
+                }
+                
+                // Ищем варианты ответов
+                const optionMatch = trimmedLine.match(/^([A-D])[).]\s*(.+)$/i);
+                if (optionMatch) {
+                    const index = optionMatch[1].toUpperCase().charCodeAt(0) - 65; // A=0, B=1, C=2, D=3
+                    if (index >= 0 && index < 4) {
+                        options[index] = optionMatch[2].trim();
+                        foundOptions++;
+                    }
+                }
+            }
+
+            // Если не нашли варианты в формате A) B) C) D), пробуем другой парсинг
+            if (foundOptions === 0) {
+                for (let i = 0; i < Math.min(4, lines.length - 1); i++) {
+                    const line = lines[i + 1] || '';
+                    if (line.trim() && !line.match(/^[A-D][).]/)) {
+                        options[i] = line.trim();
+                    }
+                }
+            }
+
+            // Обновляем интерфейс
+            document.getElementById('questionText').textContent = question;
+            document.getElementById('progressText').textContent = `Вопрос ${currentQuestion + 1} из ${totalQuestions}`;
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.innerHTML = `
+                    <strong>${String.fromCharCode(65 + index)})</strong> ${option}
+                `;
+                optionElement.onclick = () => selectOption(index);
+                optionsContainer.appendChild(optionElement);
+            });
+
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        // Выбор варианта
+        function selectOption(index) {
+            const options = document.querySelectorAll('.option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            options[index].classList.add('selected');
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        // Следующий вопрос
+        async function nextQuestion() {
+            const selectedOption = document.querySelector('.option.selected');
+            if (!selectedOption) return;
+
+            const answerText = selectedOption.textContent.trim();
+            answers.push(answerText);
+            currentQuestion++;
+
+            if (currentQuestion < totalQuestions) {
+                showLoading('Генерация следующего вопроса...');
+                await generateQuestion();
+            } else {
+                await showResults();
+            }
+        }
+
+        // Показать результаты
+        async function showResults() {
+            document.getElementById('questionSection').style.display = 'none';
+            showLoading('Анализируем ваши ответы...');
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/generate-result`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        answers: answers
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Ошибка сервера: ${response.status} - ${errorText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    throw new Error('Неверный формат ответа от сервера');
+                }
+
+                hideLoading();
+                document.getElementById('resultSection').style.display = 'block';
+                document.getElementById('resultDescription').innerHTML = 
+                    data.choices[0].message.content.replace(/\n/g, '<br>');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Ошибка при генерации результатов: ' + error.message);
+                
+                // Показываем заглушку если API не работает
+                document.getElementById('resultDescription').innerHTML = `
+                    На основе ваших ответов мы определили, что вам идеально подходят ароматы с нотами:<br><br>
+                    • <strong>Свежие цитрусовые и зеленые аккорды</strong> - для энергии и бодрости<br>
+                    • <strong>Цветочные и фруктовые ноты</strong> - для романтичного настроения<br>
+                    • <strong>Древесные и мускусные базы</strong> - для уверенности и загадочности<br><br>
+                    Рекомендуем посетить парфюмерный бутик для тестирования ароматов!
+                `;
+                document.getElementById('resultSection').style.display = 'block';
+                hideLoading();
+            }
+        }
+
+        // Перезапуск теста
+        function restartTest() {
+            currentQuestion = 0;
+            answers = [];
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('questionSection').style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            showLoading('Загрузка первого вопроса...');
+            generateQuestion();
+        }
+
+        // Вспомогательные функции
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingSection').style.display = 'block';
+            document.getElementById('questionSection').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingSection').style.display = 'none';
+            document.getElementById('questionSection').style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            hideLoading();
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Скрываем ошибку при клике
+        document.getElementById('errorMessage').onclick = function() {
+            this.style.display = 'none';
+        };
+
+        // Обработка ошибок сети
+        window.addEventListener('online', function() {
+            const errorDiv = document.getElementById('errorMessage');
+            if (errorDiv.textContent.includes('сети') || errorDiv.textContent.includes('Network')) {
+                errorDiv.style.display = 'none';
+                if (currentQuestion === 0) {
+                    generateQuestion();
+                }
+            }
+        });
+
+        window.addEventListener('offline', function() {
+            showError('Отсутствует подключение к интернету. Проверьте ваше соединение.');
+        });
+    </script>
+</body>
+</html>
