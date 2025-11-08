@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
 // 🔑 ЗАМЕНИТЕ ЭТОТ КЛЮЧ НА ВАШ OPENAI API КЛЮЧ
-const API_KEY = 'sk-ваш-настоящий-ключ-тут';
+const API_KEY = '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';
 
 module.exports = async (req, res) => {
   // Разрешаем CORS
